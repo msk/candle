@@ -507,7 +507,7 @@ fn main() -> anyhow::Result<()> {
     let mut pre_prompt_tokens = vec![];
     for prompt_index in 0.. {
         let prompt_str = match &prompt {
-            Prompt::One(prompt) => prompt.clone(),
+            Prompt::One(prompt) => format!("<|user|>\n{prompt}<|end|>\n<|assistant|>"),
             Prompt::Interactive | Prompt::Chat => {
                 let is_interactive = matches!(prompt, Prompt::Interactive);
                 print!("> ");
@@ -531,7 +531,7 @@ fn main() -> anyhow::Result<()> {
                 } else if args.which.is_mistral() {
                     format!("[INST] {prompt} [/INST]")
                 } else {
-                    prompt
+                    format!("<|user|>\n{prompt}<|end|>")
                 }
             }
         };
@@ -597,6 +597,7 @@ fn main() -> anyhow::Result<()> {
         let eos_token = match args.which {
             Which::SmolLM2_360MInstruct | Which::SmolLM2_1BInstruct => "<|endoftext|>",
             Which::L8b => "<|end_of_text|>",
+            Which::Phi3 => "<|end|>",
             _ => match args.which.is_open_chat() {
                 true => "<|end_of_turn|>",
                 false => "</s>",
@@ -604,6 +605,15 @@ fn main() -> anyhow::Result<()> {
         };
 
         let eos_token = *tos.tokenizer().get_vocab(true).get(eos_token).unwrap();
+        // eprintln!(
+        //     "eos tokens: {} {} {}",
+        //     *tos.tokenizer().get_vocab(true).get("<|end|>").unwrap(),
+        //     *tos.tokenizer().get_vocab(true).get("<|user|>").unwrap(),
+        //     *tos.tokenizer()
+        //         .get_vocab(true)
+        //         .get("<|assistant|>")
+        //         .unwrap()
+        // );
         let start_post_prompt = std::time::Instant::now();
         let mut sampled = 0;
         for index in 0..to_sample {
