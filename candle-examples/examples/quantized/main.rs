@@ -507,7 +507,10 @@ fn main() -> anyhow::Result<()> {
     let mut pre_prompt_tokens = vec![];
     for prompt_index in 0.. {
         let prompt_str = match &prompt {
-            Prompt::One(prompt) => prompt.clone(),
+            Prompt::One(prompt) => format!(
+                "<|im_start|>user\n{}<|im_end|>\n<|im_start|>assistant\n",
+                prompt.clone()
+            ),
             Prompt::Interactive | Prompt::Chat => {
                 let is_interactive = matches!(prompt, Prompt::Interactive);
                 print!("> ");
@@ -595,7 +598,7 @@ fn main() -> anyhow::Result<()> {
         }
 
         let eos_token = match args.which {
-            Which::SmolLM2_360MInstruct | Which::SmolLM2_1BInstruct => "<|endoftext|>",
+            Which::SmolLM2_360MInstruct | Which::SmolLM2_1BInstruct => "<|im_end|>",
             Which::L8b => "<|end_of_text|>",
             _ => match args.which.is_open_chat() {
                 true => "<|end_of_turn|>",
